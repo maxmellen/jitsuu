@@ -12,7 +12,7 @@ import requests
 from lxml import html
 
 BASE_URL = "https://kotobank.jp/dictionary/jitsu/{page}/"
-XPATH = "//*[@id=\"mainArea\"]/section/ul//a"
+XPATH = '//*[@id="mainArea"]/section/ul//a'
 USER_AGENT = "Mozilla/5.0 (compatible; kotobank-jitsu-scraper/0.1)"
 REQUEST_TIMEOUT_SECONDS = 20
 
@@ -162,18 +162,12 @@ def main() -> int:
         total_upserted += page_upserted
         total_skipped += page_skipped
 
-        print(
-            f"page {page}: upserted {page_upserted} entries, skipped {page_skipped}"
-        )
+        print(f"page {page}: upserted {page_upserted} entries, skipped {page_skipped}")
 
         if page != args.end and args.delay > 0:
             time.sleep(args.delay)
 
-    print(
-        "done: "
-        f"{total_upserted} entries upserted, "
-        f"{total_skipped} skipped."
-    )
+    print(f"done: {total_upserted} entries upserted, {total_skipped} skipped.")
     return 0
 
 
