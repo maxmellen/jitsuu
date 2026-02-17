@@ -65,22 +65,27 @@ def ensure_schema(conn: sqlite3.Connection, table: str) -> None:
         CREATE TABLE IF NOT EXISTS {table} (
             id INTEGER PRIMARY KEY,
             keyword TEXT NOT NULL,
-            href TEXT NOT NULL
+            href TEXT NOT NULL,
+            type TEXT NOT NULL
         )
         """
     )
+    columns = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if "type" not in columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN type TEXT")
     conn.commit()
 
 
 def extract_entries(
     doc: html.HtmlElement, *, kanji_only: bool
-) -> list[tuple[int, str, str]]:
-    entries: list[tuple[int, str, str]] = []
+) -> list[tuple[int, str, str, str]]:
+    entries: list[tuple[int, str, str, str]] = []
     for anchor in doc.xpath(XPATH):
         keyword_raw = anchor.text_content().strip()
         if not keyword_raw:
             continue
-        if kanji_only and "(漢字)" not in keyword_raw:
+        is_kanji = "(漢字)" in keyword_raw
+        if kanji_only and not is_kanji:
             continue
         keyword = KANJI_SUFFIX_RE.sub("", keyword_raw).strip()
         if not keyword:
@@ -92,22 +97,24 @@ def extract_entries(
         if not match:
             continue
         entry_id = int(match.group(1))
-        entries.append((entry_id, keyword, href))
+        entry_type = "kanji" if is_kanji else "word"
+        entries.append((entry_id, keyword, href, entry_type))
     return entries
 
 
 def upsert_entries(
-    conn: sqlite3.Connection, table: str, entries: list[tuple[int, str, str]]
+    conn: sqlite3.Connection, table: str, entries: list[tuple[int, str, str, str]]
 ) -> int:
     if not entries:
         return 0
     conn.executemany(
         f"""
-        INSERT INTO {table} (id, keyword, href)
-        VALUES (?, ?, ?)
+        INSERT INTO {table} (id, keyword, href, type)
+        VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             keyword = excluded.keyword,
-            href = excluded.href
+            href = excluded.href,
+            type = excluded.type
         """,
         entries,
     )

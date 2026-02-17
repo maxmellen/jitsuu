@@ -19,7 +19,7 @@ Run
 Output
 - DB: `data/kotobank.sqlite`
 - Table: `jitsu_entries`
-- Columns: `id` (INTEGER PRIMARY KEY), `keyword` (TEXT), `href` (TEXT)
+- Columns: `id` (INTEGER PRIMARY KEY), `keyword` (TEXT), `href` (TEXT), `type` (TEXT: `kanji` or `word`)
 
 Tooling
 - Format: `uv run ruff format /Users/maxmellen/Developer/jithree`
