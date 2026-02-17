@@ -43,6 +43,11 @@ def parse_args() -> argparse.Namespace:
         default=1.0,
         help="Delay between requests in seconds (default: 1.0)",
     )
+    parser.add_argument(
+        "--kanji-only",
+        action="store_true",
+        help="Only keep entries whose keyword includes '(漢字)' before stripping.",
+    )
     return parser.parse_args()
 
 
@@ -67,11 +72,15 @@ def ensure_schema(conn: sqlite3.Connection, table: str) -> None:
     conn.commit()
 
 
-def extract_entries(doc: html.HtmlElement) -> list[tuple[int, str, str]]:
+def extract_entries(
+    doc: html.HtmlElement, *, kanji_only: bool
+) -> list[tuple[int, str, str]]:
     entries: list[tuple[int, str, str]] = []
     for anchor in doc.xpath(XPATH):
         keyword_raw = anchor.text_content().strip()
         if not keyword_raw:
+            continue
+        if kanji_only and "(漢字)" not in keyword_raw:
             continue
         keyword = KANJI_SUFFIX_RE.sub("", keyword_raw).strip()
         if not keyword:
@@ -139,7 +148,7 @@ def main() -> int:
             continue
 
         doc = html.fromstring(response.text)
-        entries = extract_entries(doc)
+        entries = extract_entries(doc, kanji_only=args.kanji_only)
         page_upserted = upsert_entries(conn, table, entries)
         page_skipped = max(len(doc.xpath(XPATH)) - page_upserted, 0)
 

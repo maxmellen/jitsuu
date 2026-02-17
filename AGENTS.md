@@ -11,6 +11,7 @@ Setup
 Run
 - Default run: `uv run python scripts/scrape_kotobank_jitsu.py`
 - One page: `uv run python scripts/scrape_kotobank_jitsu.py --start 1 --end 1`
+- Kanji-only entries: `uv run python scripts/scrape_kotobank_jitsu.py --kanji-only`
 - Custom DB: `--db data/kotobank.sqlite`
 - Custom table: `--table jitsu_entries`
 - Delay between requests: `--delay 1.0`
