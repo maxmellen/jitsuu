@@ -2,15 +2,46 @@
   color-scheme: light;
   --bg: #f6f2ec;
   --bg-accent: #efe5da;
+  --bg-grad-1: #fff8f1;
+  --bg-grad-2: #f6efe9;
   --ink: #2a1f1a;
   --muted: #6f625b;
   --accent: #b04a2f;
   --accent-soft: #e7c9b7;
+  --badge-ink: #4a2c1f;
   --card: rgba(255, 255, 255, 0.86);
+  --surface: #fff;
   --border: #e2d3c7;
   --shadow: 0 18px 40px rgba(45, 30, 21, 0.12);
+  --overlay-1: rgba(255, 255, 255, 0.25);
+  --overlay-2: rgba(255, 255, 255, 0.08);
   --radius-lg: 18px;
   --radius-md: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #14110e;
+    --bg-accent: #1c1713;
+    --bg-grad-1: #1a1511;
+    --bg-grad-2: #14110e;
+    --ink: #f0e6dc;
+    --muted: #b9aaa0;
+    --accent: #e18b67;
+    --accent-soft: rgba(225, 139, 103, 0.22);
+    --badge-ink: #f3e7dd;
+    --card: rgba(33, 27, 22, 0.92);
+    --surface: #211b16;
+    --border: #3a2f28;
+    --shadow: 0 20px 45px rgba(7, 6, 5, 0.55);
+    --overlay-1: rgba(20, 17, 14, 0.65);
+    --overlay-2: rgba(255, 255, 255, 0.04);
+  }
+
+  .kanji-glyph img {
+    filter: invert(1) brightness(1.05);
+  }
 }
 
 * {
@@ -26,8 +57,8 @@ body {
   font-family: "PT Sans", "BIZ UDPGothic", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at 20% 20%, #fff8f1, var(--bg)),
-    linear-gradient(120deg, #f6efe9 0%, #f0e4da 45%, #f6f2ec 100%);
+    radial-gradient(circle at 20% 20%, var(--bg-grad-1), var(--bg)),
+    linear-gradient(120deg, var(--bg-grad-2) 0%, var(--bg-accent) 45%, var(--bg) 100%);
   min-height: 100vh;
 }
 
@@ -36,11 +67,11 @@ body::before {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(120deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(120deg, var(--overlay-1) 0%, rgba(255, 255, 255, 0) 60%),
     repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.08) 0px,
-      rgba(255, 255, 255, 0.08) 1px,
+      var(--overlay-2) 0px,
+      var(--overlay-2) 1px,
       transparent 1px,
       transparent 10px
     );
@@ -183,7 +214,7 @@ body::before {
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface);
   font-size: 13px;
   color: var(--ink);
 }
@@ -214,7 +245,7 @@ body::before {
 
 .result-nav-button {
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface);
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 12px;
@@ -344,7 +375,7 @@ body::before {
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--accent-soft);
-  color: #4a2c1f;
+  color: var(--badge-ink);
   font-family: "PT Serif", "BIZ UDPMincho", serif;
   letter-spacing: 0.08em;
 }
@@ -389,7 +420,7 @@ body::before {
   height: 44px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   box-shadow: var(--shadow);
   cursor: pointer;
