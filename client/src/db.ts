@@ -58,7 +58,7 @@ export function searchEntries(db: Database, query: string, jikeiFilters: string[
   const seen = new Set<number>()
 
   if (variants.length === 0) {
-    grouped.keyword = runFilterOnly(db, jikeiFilters, 200)
+    grouped.keyword = runFilterOnly(db, jikeiFilters, 200).sort(makeComparator('keyword', []))
     return grouped
   }
 
@@ -80,6 +80,10 @@ export function searchEntries(db: Database, query: string, jikeiFilters: string[
       grouped[target].push(row)
     }
   }
+
+  grouped.keyword.sort(makeComparator('keyword', variants))
+  grouped.jion.sort(makeComparator('jion', variants))
+  grouped.jikun.sort(makeComparator('jikun', variants))
 
   return grouped
 }
@@ -141,6 +145,97 @@ function runFilterOnly(db: Database, jikeiFilters: string[], limit: number): Ent
   }
   stmt.free()
   return rows
+}
+
+const jaCollator = new Intl.Collator('ja')
+
+function normalizeReadingSegment(text: string): string {
+  return text
+    .replace(/（[^）]*）/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .trim()
+}
+
+function splitReadingSegments(value: string): string[] {
+  return value
+    .split('・')
+    .map((segment) => normalizeReadingSegment(segment))
+    .filter((segment) => segment.length > 0)
+}
+
+function matchSegmentIndex(value: string, variants: string[]): number {
+  if (!value || variants.length === 0) {
+    return Number.POSITIVE_INFINITY
+  }
+  const segments = splitReadingSegments(value)
+  if (segments.length === 0) {
+    return Number.POSITIVE_INFINITY
+  }
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index]
+    for (const variant of variants) {
+      if (!variant) {
+        continue
+      }
+      if (segment.startsWith(variant)) {
+        return index
+      }
+    }
+  }
+  return Number.POSITIVE_INFINITY
+}
+
+function makeComparator(group: keyof SearchResults, variants: string[]) {
+  return (left: EntryRow, right: EntryRow): number => {
+    const primaryLeft =
+      group === 'jikun'
+        ? matchSegmentIndex(left.jikun, variants)
+        : matchSegmentIndex(left.jion, variants)
+    const primaryRight =
+      group === 'jikun'
+        ? matchSegmentIndex(right.jikun, variants)
+        : matchSegmentIndex(right.jion, variants)
+    if (primaryLeft !== primaryRight) {
+      return primaryLeft - primaryRight
+    }
+
+    const secondaryLeft =
+      group === 'jikun'
+        ? matchSegmentIndex(left.jion, variants)
+        : matchSegmentIndex(left.jikun, variants)
+    const secondaryRight =
+      group === 'jikun'
+        ? matchSegmentIndex(right.jion, variants)
+        : matchSegmentIndex(right.jikun, variants)
+    if (secondaryLeft !== secondaryRight) {
+      return secondaryLeft - secondaryRight
+    }
+
+    const jionCompare = compareNullable(left.jion, right.jion)
+    if (jionCompare !== 0) {
+      return jionCompare
+    }
+    const jikunCompare = compareNullable(left.jikun, right.jikun)
+    if (jikunCompare !== 0) {
+      return jikunCompare
+    }
+    return left.id - right.id
+  }
+}
+
+function compareNullable(left: string, right: string): number {
+  const leftEmpty = !left
+  const rightEmpty = !right
+  if (leftEmpty && rightEmpty) {
+    return 0
+  }
+  if (leftEmpty) {
+    return 1
+  }
+  if (rightEmpty) {
+    return -1
+  }
+  return jaCollator.compare(left, right)
 }
 
 function runQuery(

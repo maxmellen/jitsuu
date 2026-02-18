@@ -47,7 +47,7 @@ root.innerHTML = `
                 aria-expanded="false"
                 aria-controls="filters-body"
               >
-                開く
+                展開
               </button>
               <button type="button" class="filters-clear" id="clear-filters">解除</button>
             </div>
@@ -114,9 +114,9 @@ async function init(): Promise<void> {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     })
     window.addEventListener('scroll', () => {
-      scrollTopButton.hidden = window.scrollY < 300
+      scrollTopButton.classList.toggle('is-visible', window.scrollY >= 300)
     })
-    scrollTopButton.hidden = true
+    scrollTopButton.classList.remove('is-visible')
   } catch (error) {
     console.error(error)
     statusText.textContent = '読込に失敗しました'
@@ -127,7 +127,7 @@ function setFiltersOpen(open: boolean): void {
   filtersOpen = open
   filtersBody.hidden = !open
   toggleFiltersButton.setAttribute('aria-expanded', String(open))
-  toggleFiltersButton.textContent = open ? '閉じる' : '開く'
+  toggleFiltersButton.textContent = open ? '折畳' : '展開'
 }
 
 function scheduleSearch(): void {
@@ -221,7 +221,7 @@ function renderResults(results: SearchResults): void {
       return
     }
     const anyClosed = toggles.some(({ list }) => list.hidden)
-    toggleAll.textContent = anyClosed ? '全て開く' : '全て閉じる'
+    toggleAll.textContent = anyClosed ? '全て展開' : '全て折畳'
   }
 
   for (const group of groups) {

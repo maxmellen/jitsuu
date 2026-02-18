@@ -36,6 +36,8 @@ Tooling
 - Frontend format: `pnpm run format` (in `/Users/maxmellen/Developer/jithree/client`)
 - Frontend lint: `pnpm run lint` (in `/Users/maxmellen/Developer/jithree/client`, Biome)
 - Frontend typecheck: `pnpm run typecheck` (in `/Users/maxmellen/Developer/jithree/client`)
+Frontend docs
+- Client search & sorting: `client/search.md`
 
 Quality
 - After code changes, run `ruff format` and `ty check`.
