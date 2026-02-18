@@ -201,16 +201,79 @@ body::before {
   gap: 18px;
 }
 
+.result-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.result-nav-button {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "BIZ UDPGothic", sans-serif;
+}
+
+.result-nav-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .result-group {
   display: grid;
   gap: 12px;
 }
 
-.result-group-title {
+.result-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "BIZ UDPMincho", serif;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  padding: 0;
+}
+
+.result-group-toggle::after {
+  content: "▾";
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
   color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.result-group-toggle[aria-expanded="false"]::after {
+  transform: rotate(-90deg);
+}
+
+.result-group-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.result-group-count {
+  font-family: "BIZ UDPGothic", sans-serif;
+  font-size: 12px;
+  letter-spacing: normal;
+  color: var(--muted);
+}
+
+.result-group-list[hidden] {
+  display: none;
 }
 
 .result-group-list {
@@ -310,22 +373,5 @@ body::before {
   .layout {
     grid-template-columns: minmax(0, 360px) 1fr;
     align-items: start;
-  }
-}
-
-@media (max-width: 700px) {
-  .result-card {
-    grid-template-columns: 1fr;
-    text-align: left;
-  }
-
-  .kanji-block {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-  }
-
-  .kanji-badge {
-    order: 2;
   }
 }

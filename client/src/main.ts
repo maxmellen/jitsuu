@@ -27,7 +27,7 @@ root.innerHTML = `
     <section class="layout">
       <div class="sidebar">
         <div class="search-field">
-          <span class="search-label">Search</span>
+          <span class="search-label">検索</span>
           <input
             class="search-input"
             id="search-input"
@@ -40,10 +40,16 @@ root.innerHTML = `
           <div class="filters-header">
             <div class="filters-title">字形</div>
             <div class="filters-actions">
-              <button type="button" class="filters-toggle" id="toggle-filters" aria-expanded="false">
-                Show
+              <button
+                type="button"
+                class="filters-toggle"
+                id="toggle-filters"
+                aria-expanded="false"
+                aria-controls="filters-body"
+              >
+                開く
               </button>
-              <button type="button" class="filters-clear" id="clear-filters">Clear</button>
+              <button type="button" class="filters-clear" id="clear-filters">解除</button>
             </div>
           </div>
           <div class="filters-body" id="filters-body">
@@ -53,7 +59,7 @@ root.innerHTML = `
       </div>
       <div class="content">
         <section class="status">
-          <span id="status-text">Loading database…</span>
+          <span id="status-text">データベース読込中…</span>
           <span id="result-count"></span>
         </section>
         <section class="results" id="results"></section>
@@ -93,7 +99,7 @@ async function init(): Promise<void> {
     setFiltersOpen(window.matchMedia('(min-width: 900px)').matches)
     searchInput.disabled = false
     searchInput.focus()
-    statusText.textContent = 'Ready'
+    statusText.textContent = '準備完了'
 
     searchInput.addEventListener('input', () => scheduleSearch())
     clearFiltersButton.addEventListener('click', () => {
@@ -104,7 +110,7 @@ async function init(): Promise<void> {
     toggleFiltersButton.addEventListener('click', () => setFiltersOpen(!filtersOpen))
   } catch (error) {
     console.error(error)
-    statusText.textContent = 'Failed to load database'
+    statusText.textContent = '読込に失敗しました'
   }
 }
 
@@ -112,7 +118,7 @@ function setFiltersOpen(open: boolean): void {
   filtersOpen = open
   filtersBody.hidden = !open
   toggleFiltersButton.setAttribute('aria-expanded', String(open))
-  toggleFiltersButton.textContent = open ? 'Hide' : 'Show'
+  toggleFiltersButton.textContent = open ? '閉じる' : '開く'
 }
 
 function scheduleSearch(): void {
@@ -135,7 +141,7 @@ function runSearch(): void {
   if (!query && filters.length === 0) {
     resultsContainer.innerHTML = ''
     resultCount.textContent = ''
-    statusText.textContent = 'Type to search'
+    statusText.textContent = '検索語を入力'
     return
   }
 
@@ -143,16 +149,16 @@ function runSearch(): void {
   const total = result.keyword.length + result.jion.length + result.jikun.length
 
   if (total === 0) {
-    resultsContainer.innerHTML = '<div class="empty-state">No matches found.</div>'
-    resultCount.textContent = '0 results'
-    statusText.textContent = 'No matches'
+    resultsContainer.innerHTML = '<div class="empty-state">一致する結果がありません</div>'
+    resultCount.textContent = '0件'
+    statusText.textContent = '一致なし'
     return
   }
 
   statusText.textContent = query
-    ? `keyword ${result.keyword.length} / 音 ${result.jion.length} / 訓 ${result.jikun.length}`
-    : 'Filtered by 字形'
-  resultCount.textContent = `${total} result${total === 1 ? '' : 's'}`
+    ? `字 ${result.keyword.length} / 音 ${result.jion.length} / 訓 ${result.jikun.length}`
+    : '形'
+  resultCount.textContent = `${total}件`
   renderResults(result)
 }
 
@@ -196,10 +202,13 @@ function renderResults(results: SearchResults): void {
   const fragment = document.createDocumentFragment()
 
   const groups: Array<{ key: keyof SearchResults; label: string }> = [
-    { key: 'keyword', label: 'Keyword' },
+    { key: 'keyword', label: '字' },
     { key: 'jion', label: '音' },
     { key: 'jikun', label: '訓' },
   ]
+
+  const nav = document.createElement('div')
+  nav.className = 'result-nav'
 
   for (const group of groups) {
     const rows = results[group.key]
@@ -209,21 +218,63 @@ function renderResults(results: SearchResults): void {
 
     const groupSection = document.createElement('section')
     groupSection.className = 'result-group'
+    groupSection.id = `group-${group.key}`
 
-    const title = document.createElement('div')
-    title.className = 'result-group-title'
-    title.textContent = `${group.label} · ${rows.length}`
+    const header = document.createElement('div')
+    header.className = 'result-group-header'
+
+    const listId = `group-${group.key}-list`
+    const toggle = document.createElement('button')
+    toggle.type = 'button'
+    toggle.className = 'result-group-toggle'
+    toggle.id = `group-${group.key}-toggle`
+    toggle.setAttribute('aria-expanded', 'true')
+    toggle.setAttribute('aria-controls', listId)
+
+    const label = document.createElement('span')
+    label.className = 'result-group-label'
+    label.textContent = group.label
+
+    const count = document.createElement('span')
+    count.className = 'result-group-count'
+    count.textContent = `${rows.length}件`
+
+    toggle.appendChild(label)
+    toggle.appendChild(count)
 
     const list = document.createElement('div')
     list.className = 'result-group-list'
+    list.id = listId
 
     for (const row of rows) {
       list.appendChild(createResultCard(row))
     }
 
-    groupSection.appendChild(title)
+    toggle.addEventListener('click', () => {
+      const isOpen = !list.hidden
+      list.hidden = isOpen
+      toggle.setAttribute('aria-expanded', String(!isOpen))
+    })
+
+    header.appendChild(toggle)
+    groupSection.appendChild(header)
     groupSection.appendChild(list)
     fragment.appendChild(groupSection)
+
+    const navButton = document.createElement('button')
+    navButton.type = 'button'
+    navButton.className = 'result-nav-button'
+    navButton.textContent = `${group.label} ${rows.length}`
+    navButton.addEventListener('click', () => {
+      list.hidden = false
+      toggle.setAttribute('aria-expanded', 'true')
+      groupSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    nav.appendChild(navButton)
+  }
+
+  if (nav.childElementCount > 0) {
+    fragment.prepend(nav)
   }
 
   resultsContainer.appendChild(fragment)
