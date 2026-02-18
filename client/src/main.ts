@@ -1,5 +1,4 @@
 import './style.css'
-import { registerSW } from 'virtual:pwa-register'
 import {
   getJikeiOptions,
   loadDatabase,
@@ -87,10 +86,6 @@ const selectedJikei = new Set<string>()
 let searchTimeout: number | undefined
 let filtersOpen = false
 let applyingUrlState = false
-
-if (import.meta.env.PROD) {
-  registerSW({ immediate: true })
-}
 
 void init()
 
