@@ -77,8 +77,20 @@ body::before {
   font-size: 14px;
 }
 
-.controls {
+.layout {
   display: grid;
+  gap: 24px;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
   gap: 18px;
 }
 
@@ -111,7 +123,7 @@ body::before {
   box-shadow: 0 0 0 3px rgba(176, 74, 47, 0.18);
 }
 
-.filters {
+.filters-panel {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -129,18 +141,29 @@ body::before {
   gap: 12px;
 }
 
+.filters-actions {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .filters-title {
   font-family: "BIZ UDPMincho", serif;
   letter-spacing: 0.08em;
   font-size: 16px;
 }
 
+.filters-toggle,
 .filters-clear {
   border: none;
   background: none;
   color: var(--accent);
   font-size: 12px;
   cursor: pointer;
+}
+
+.filters-body[hidden] {
+  display: none;
 }
 
 .filter-list {
@@ -175,6 +198,23 @@ body::before {
 
 .results {
   display: grid;
+  gap: 18px;
+}
+
+.result-group {
+  display: grid;
+  gap: 12px;
+}
+
+.result-group-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+.result-group-list {
+  display: grid;
   gap: 16px;
 }
 
@@ -187,6 +227,16 @@ body::before {
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 50px rgba(45, 30, 21, 0.18);
 }
 
 .kanji-block {
@@ -257,8 +307,8 @@ body::before {
 }
 
 @media (min-width: 900px) {
-  .controls {
-    grid-template-columns: 1.2fr 1fr;
+  .layout {
+    grid-template-columns: minmax(0, 360px) 1fr;
     align-items: start;
   }
 }
