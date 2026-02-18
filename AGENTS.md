@@ -9,12 +9,11 @@ Setup
 - Python version: `3.14.3` (see `.python-version`)
 
 Run
-- Default run: `uv run python scripts/scrape_kotobank_jitsu.py`
-- One page: `uv run python scripts/scrape_kotobank_jitsu.py --start 1 --end 1`
-- Kanji-only entries: `uv run python scripts/scrape_kotobank_jitsu.py --kanji-only`
-- Collect gaiji images: `uv run python scripts/collect_gaiji_images.py`
-- Apply gaiji transcriptions: `uv run python scripts/apply_gaiji_transcriptions.py --csv data/gaiji_transcriptions.csv`
-- Generate gaiji report: `uv run python scripts/generate_gaiji_report.py`
+- Index crawl (default): `uv run python scripts/scrape_kotobank_jitsu.py --crawl=index`
+- Entry crawl (per-entry fields): `uv run python scripts/scrape_kotobank_jitsu.py --crawl=entries`
+- Both concurrently: `uv run python scripts/scrape_kotobank_jitsu.py --crawl=index,entries`
+- Kanji-only index entries: `uv run python scripts/scrape_kotobank_jitsu.py --crawl=index --kanji-only`
+- Vacuum DB after crawl: `uv run python scripts/scrape_kotobank_jitsu.py --crawl=index --vacuum`
 - Custom DB: `--db data/kotobank.sqlite`
 - Custom table: `--table jitsu_entries`
 - Delay between requests: `--delay 1.0`
@@ -22,10 +21,19 @@ Run
 Output
 - DB: `data/kotobank.sqlite`
 - Table: `jitsu_entries`
-- Columns: `id` (INTEGER PRIMARY KEY), `keyword` (TEXT), `href` (TEXT), `type` (TEXT: `kanji` or `word`)
-- Table: `jitsu_gaiji`
-- Columns: `entry_id` (INTEGER PRIMARY KEY), `image_src` (TEXT), `gaiji_char` (TEXT, nullable)
-
+- Columns:
+  - `id` (INTEGER PRIMARY KEY)
+  - `keyword` (TEXT)
+  - `href` (TEXT)
+  - `type` (TEXT: `kanji` or `word`)
+  - `gaiji_img_src` (TEXT)
+  - `jion` (TEXT)
+  - `jikun` (TEXT)
+  - `jikei` (TEXT)
 Tooling
 - Format: `uv run ruff format /Users/maxmellen/Developer/jithree`
 - Typecheck: `uv run ty check /Users/maxmellen/Developer/jithree`
+
+Quality
+- After code changes, run `ruff format` and `ty check`.
+- Update this document when architectural changes alter usage or structure.
