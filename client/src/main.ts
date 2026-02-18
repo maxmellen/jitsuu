@@ -60,22 +60,24 @@ root.innerHTML = `
       <div class="content">
         <section class="status">
           <span id="status-text">データベース読込中…</span>
-          <span id="result-count"></span>
         </section>
         <section class="results" id="results"></section>
       </div>
     </section>
+    <button type="button" class="scroll-top" id="scroll-top" aria-label="上へ">
+      上へ
+    </button>
   </div>
 `
 
 const searchInput = mustGet<HTMLInputElement>('#search-input')
 const statusText = mustGet<HTMLSpanElement>('#status-text')
-const resultCount = mustGet<HTMLSpanElement>('#result-count')
 const resultsContainer = mustGet<HTMLDivElement>('#results')
 const filtersContainer = mustGet<HTMLDivElement>('#jikei-filters')
 const clearFiltersButton = mustGet<HTMLButtonElement>('#clear-filters')
 const toggleFiltersButton = mustGet<HTMLButtonElement>('#toggle-filters')
 const filtersBody = mustGet<HTMLDivElement>('#filters-body')
+const scrollTopButton = mustGet<HTMLButtonElement>('#scroll-top')
 
 searchInput.disabled = true
 
@@ -108,6 +110,13 @@ async function init(): Promise<void> {
       scheduleSearch()
     })
     toggleFiltersButton.addEventListener('click', () => setFiltersOpen(!filtersOpen))
+    scrollTopButton.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+    window.addEventListener('scroll', () => {
+      scrollTopButton.hidden = window.scrollY < 300
+    })
+    scrollTopButton.hidden = true
   } catch (error) {
     console.error(error)
     statusText.textContent = '読込に失敗しました'
@@ -140,7 +149,6 @@ function runSearch(): void {
 
   if (!query && filters.length === 0) {
     resultsContainer.innerHTML = ''
-    resultCount.textContent = ''
     statusText.textContent = '検索語を入力'
     return
   }
@@ -150,15 +158,11 @@ function runSearch(): void {
 
   if (total === 0) {
     resultsContainer.innerHTML = '<div class="empty-state">一致する結果がありません</div>'
-    resultCount.textContent = '0件'
     statusText.textContent = '一致なし'
     return
   }
 
-  statusText.textContent = query
-    ? `字 ${result.keyword.length} / 音 ${result.jion.length} / 訓 ${result.jikun.length}`
-    : '形'
-  resultCount.textContent = `${total}件`
+  statusText.textContent = query ? '検索結果' : '形'
   renderResults(result)
 }
 
@@ -209,6 +213,16 @@ function renderResults(results: SearchResults): void {
 
   const nav = document.createElement('div')
   nav.className = 'result-nav'
+  const toggles: Array<{ toggle: HTMLButtonElement; list: HTMLDivElement }> = []
+  let toggleAll: HTMLButtonElement | null = null
+
+  const updateToggleAllLabel = (): void => {
+    if (!toggleAll) {
+      return
+    }
+    const anyClosed = toggles.some(({ list }) => list.hidden)
+    toggleAll.textContent = anyClosed ? '全て開く' : '全て閉じる'
+  }
 
   for (const group of groups) {
     const rows = results[group.key]
@@ -254,7 +268,9 @@ function renderResults(results: SearchResults): void {
       const isOpen = !list.hidden
       list.hidden = isOpen
       toggle.setAttribute('aria-expanded', String(!isOpen))
+      updateToggleAllLabel()
     })
+    toggles.push({ toggle, list })
 
     header.appendChild(toggle)
     groupSection.appendChild(header)
@@ -274,6 +290,28 @@ function renderResults(results: SearchResults): void {
   }
 
   if (nav.childElementCount > 0) {
+    const total = groups.reduce((sum, group) => sum + results[group.key].length, 0)
+    const totalChip = document.createElement('div')
+    totalChip.className = 'result-nav-total'
+    totalChip.textContent = `計 ${total}`
+
+    toggleAll = document.createElement('button')
+    toggleAll.type = 'button'
+    toggleAll.className = 'result-nav-button'
+    toggleAll.addEventListener('click', () => {
+      const anyClosed = toggles.some(({ list }) => list.hidden)
+      for (const { list, toggle } of toggles) {
+        list.hidden = !anyClosed
+        toggle.setAttribute('aria-expanded', String(anyClosed))
+      }
+      updateToggleAllLabel()
+    })
+
+    nav.appendChild(totalChip)
+    if (toggles.length > 0) {
+      updateToggleAllLabel()
+      nav.appendChild(toggleAll)
+    }
     fragment.prepend(nav)
   }
 

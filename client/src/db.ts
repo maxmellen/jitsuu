@@ -68,12 +68,39 @@ export function searchEntries(db: Database, query: string, jikeiFilters: string[
       if (seen.has(row.id)) {
         continue
       }
+      let target: keyof SearchResults = field
+      if (field === 'keyword' && row.gaiji_img_src && isKanaOnlyKeyword(row.keyword)) {
+        if (matchesSegmentPrefix(row.jion, variants)) {
+          target = 'jion'
+        } else if (matchesSegmentPrefix(row.jikun, variants)) {
+          target = 'jikun'
+        }
+      }
       seen.add(row.id)
-      grouped[field].push(row)
+      grouped[target].push(row)
     }
   }
 
   return grouped
+}
+
+function isKanaOnlyKeyword(value: string): boolean {
+  return value.length > 0 && !/[\u4E00-\u9FFF]/.test(value)
+}
+
+function matchesSegmentPrefix(value: string, variants: string[]): boolean {
+  if (!value) {
+    return false
+  }
+  for (const variant of variants) {
+    if (!variant) {
+      continue
+    }
+    if (value.startsWith(variant) || value.includes(`・${variant}`)) {
+      return true
+    }
+  }
+  return false
 }
 
 function runFilterOnly(db: Database, jikeiFilters: string[], limit: number): EntryRow[] {
