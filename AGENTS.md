@@ -38,6 +38,8 @@ Tooling
 - Frontend typecheck: `pnpm run typecheck` (in `/Users/maxmellen/Developer/jithree/client`)
 Frontend docs
 - Client search & sorting: `client/search.md`
+Frontend deploy
+- Vite base is configured for `/jitsuu/` subpath in `client/vite.config.ts`.
 
 Quality
 - After code changes, run `ruff format` and `ty check`.

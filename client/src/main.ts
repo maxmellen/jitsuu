@@ -8,7 +8,7 @@ import {
 } from './db'
 
 const APP_SELECTOR = '#app'
-const DB_URL = '/kotobank.sqlite'
+const DB_URL = `${import.meta.env.BASE_URL}kotobank.sqlite`
 const GAIJI_BASE_URL = 'https://kotobank.jp'
 
 const app = document.querySelector<HTMLDivElement>(APP_SELECTOR)
