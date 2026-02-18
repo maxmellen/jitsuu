@@ -86,6 +86,7 @@ let jikeiOptions: string[] = []
 const selectedJikei = new Set<string>()
 let searchTimeout: number | undefined
 let filtersOpen = false
+let applyingUrlState = false
 
 if (import.meta.env.PROD) {
   registerSW({ immediate: true })
@@ -97,11 +98,13 @@ async function init(): Promise<void> {
   try {
     db = await loadDatabase(DB_URL)
     jikeiOptions = getJikeiOptions(db)
+    applyUrlState()
     renderFilters()
     setFiltersOpen(window.matchMedia('(min-width: 900px)').matches)
     searchInput.disabled = false
     searchInput.focus()
     statusText.textContent = '準備完了'
+    runSearch()
 
     searchInput.addEventListener('input', () => scheduleSearch())
     clearFiltersButton.addEventListener('click', () => {
@@ -117,6 +120,11 @@ async function init(): Promise<void> {
       scrollTopButton.classList.toggle('is-visible', window.scrollY >= 300)
     })
     scrollTopButton.classList.remove('is-visible')
+    window.addEventListener('popstate', () => {
+      applyUrlState()
+      renderFilters()
+      runSearch()
+    })
   } catch (error) {
     console.error(error)
     statusText.textContent = '読込に失敗しました'
@@ -128,6 +136,45 @@ function setFiltersOpen(open: boolean): void {
   filtersBody.hidden = !open
   toggleFiltersButton.setAttribute('aria-expanded', String(open))
   toggleFiltersButton.textContent = open ? '折畳' : '展開'
+}
+
+function readUrlState(): { query: string; filters: string[] } {
+  const params = new URLSearchParams(window.location.search)
+  return {
+    query: params.get('q') ?? '',
+    filters: params.getAll('k'),
+  }
+}
+
+function writeUrlState(query: string, filters: string[]): void {
+  if (applyingUrlState) {
+    return
+  }
+  const url = new URL(window.location.href)
+  if (query) {
+    url.searchParams.set('q', query)
+  } else {
+    url.searchParams.delete('q')
+  }
+  url.searchParams.delete('k')
+  for (const filter of filters) {
+    url.searchParams.append('k', filter)
+  }
+  history.replaceState(null, '', url)
+}
+
+function applyUrlState(): void {
+  applyingUrlState = true
+  const { query, filters } = readUrlState()
+  searchInput.value = query
+  selectedJikei.clear()
+  const allowed = new Set(jikeiOptions)
+  for (const filter of filters) {
+    if (allowed.has(filter)) {
+      selectedJikei.add(filter)
+    }
+  }
+  applyingUrlState = false
 }
 
 function scheduleSearch(): void {
@@ -150,6 +197,7 @@ function runSearch(): void {
   if (!query && filters.length === 0) {
     resultsContainer.innerHTML = ''
     statusText.textContent = '検索語を入力'
+    writeUrlState('', [])
     return
   }
 
@@ -159,11 +207,13 @@ function runSearch(): void {
   if (total === 0) {
     resultsContainer.innerHTML = '<div class="empty-state">一致する結果がありません</div>'
     statusText.textContent = '一致なし'
+    writeUrlState(query, filters)
     return
   }
 
   statusText.textContent = query ? '検索結果' : '形'
   renderResults(result)
+  writeUrlState(query, filters)
 }
 
 function renderFilters(): void {
