@@ -56,27 +56,8 @@ body {
   margin: 0;
   font-family: "PT Sans", "BIZ UDPGothic", sans-serif;
   color: var(--ink);
-  background:
-    radial-gradient(circle at 20% 20%, var(--bg-grad-1), var(--bg)),
-    linear-gradient(120deg, var(--bg-grad-2) 0%, var(--bg-accent) 45%, var(--bg) 100%);
+  background-color: var(--bg);
   min-height: 100vh;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(120deg, var(--overlay-1) 0%, rgba(255, 255, 255, 0) 60%),
-    repeating-linear-gradient(
-      90deg,
-      var(--overlay-2) 0px,
-      var(--overlay-2) 1px,
-      transparent 1px,
-      transparent 10px
-    );
-  pointer-events: none;
-  opacity: 0.5;
 }
 
 #app {
@@ -202,13 +183,15 @@ body::before {
 }
 
 .filter-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 .filter-chip {
   display: inline-flex;
+  width: 100%;
+  justify-content: center;
   align-items: center;
   gap: 6px;
   padding: 6px 10px;

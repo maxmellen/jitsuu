@@ -36,15 +36,26 @@ export function getJikeiOptions(db: Database): string[] {
   const stmt = db.prepare(
     "SELECT DISTINCT substr(jikei, 1, 2) AS jikei FROM jitsu_entries WHERE jikei != '' ORDER BY jikei",
   )
-  const options: string[] = []
+  const options = new Set<string>()
   while (stmt.step()) {
     const row = stmt.getAsObject() as { jikei?: string }
     if (row.jikei) {
-      options.push(row.jikei)
+      const normalized = row.jikei === '略体' ? '国字' : row.jikei
+      options.add(normalized)
     }
   }
   stmt.free()
-  return options
+
+  const preferredOrder = ['象形', '指事', '会意', '形声', '仮借', '国字']
+  const ordered: string[] = []
+  for (const item of preferredOrder) {
+    if (options.has(item)) {
+      ordered.push(item)
+      options.delete(item)
+    }
+  }
+  const remaining = Array.from(options).sort()
+  return [...ordered, ...remaining]
 }
 
 export function searchEntries(db: Database, query: string, jikeiFilters: string[]): SearchResults {

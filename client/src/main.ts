@@ -170,11 +170,21 @@ function applyUrlState(): void {
   selectedJikei.clear()
   const allowed = new Set(jikeiOptions)
   for (const filter of filters) {
-    if (allowed.has(filter)) {
-      selectedJikei.add(filter)
+    const normalized = filter === '略体' ? '国字' : filter
+    if (allowed.has(normalized)) {
+      selectedJikei.add(normalized)
     }
   }
   applyingUrlState = false
+}
+
+function expandJikeiFilters(filters: string[]): string[] {
+  if (!filters.includes('国字')) {
+    return filters
+  }
+  const expanded = new Set(filters)
+  expanded.add('略体')
+  return Array.from(expanded)
 }
 
 function scheduleSearch(): void {
@@ -192,7 +202,7 @@ function runSearch(): void {
     return
   }
   const query = searchInput.value.trim()
-  const filters = Array.from(selectedJikei.values())
+  const filters = expandJikeiFilters(Array.from(selectedJikei.values()))
 
   if (!query && filters.length === 0) {
     resultsContainer.innerHTML = ''
