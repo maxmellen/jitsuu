@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "deploy:docs": "pnpm run build && rm -rf ../docs && mkdir -p ../docs && cp -R dist/. ../docs/",
     "preview": "vite preview",
     "format": "biome format --write .",
     "lint": "biome lint .",

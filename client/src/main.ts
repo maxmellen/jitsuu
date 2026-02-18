@@ -206,7 +206,15 @@ function runSearch(): void {
     return
   }
 
-  const result = searchEntries(db, query, filters)
+  const tokens = buildQueryTokens(query)
+  const activeDb = db
+  if (!activeDb) {
+    return
+  }
+  const result =
+    tokens.length === 1
+      ? searchEntries(activeDb, tokens[0], filters)
+      : mergeResults(tokens.map((token) => searchEntries(activeDb, token, filters)))
   const total = result.keyword.length + result.jion.length + result.jikun.length
 
   if (total === 0) {
@@ -219,6 +227,47 @@ function runSearch(): void {
   statusText.textContent = query ? '検索結果' : '形'
   renderResults(result)
   writeUrlState(query, filters)
+}
+
+function buildQueryTokens(query: string): string[] {
+  const trimmed = query.trim()
+  if (!trimmed) {
+    return []
+  }
+  const kanji = extractKanji(trimmed)
+  if (kanji.length < 2) {
+    return [trimmed]
+  }
+  return [trimmed, ...kanji]
+}
+
+function extractKanji(query: string): string[] {
+  const seen = new Set<string>()
+  const chars: string[] = []
+  for (const char of query) {
+    if (/[\u4E00-\u9FFF]/.test(char) && !seen.has(char)) {
+      seen.add(char)
+      chars.push(char)
+    }
+  }
+  return chars
+}
+
+function mergeResults(resultsList: SearchResults[]): SearchResults {
+  const merged: SearchResults = { keyword: [], jion: [], jikun: [] }
+  const seen = new Set<number>()
+  for (const result of resultsList) {
+    for (const group of ['keyword', 'jion', 'jikun'] as const) {
+      for (const row of result[group]) {
+        if (seen.has(row.id)) {
+          continue
+        }
+        seen.add(row.id)
+        merged[group].push(row)
+      }
+    }
+  }
+  return merged
 }
 
 function renderFilters(): void {

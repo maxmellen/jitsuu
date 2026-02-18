@@ -24,6 +24,15 @@ The query is normalized into a set of variants:
 
 These variants are used for matching across `keyword`, `jion`, and `jikun`.
 
+## Multi-kanji Expansion
+
+If a query contains **two or more CJK ideographs**, the search expands into:
+
+1. The full query (e.g., `由莉`)
+2. Each distinct kanji in order (`由`, `莉`)
+
+Results are merged in token order and deduplicated by entry `id`.
+
 ## Matching Rules
 
 ### Segment-prefix matching
