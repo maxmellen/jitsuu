@@ -137,6 +137,15 @@ def ensure_schema(conn: sqlite3.Connection, table: str) -> None:
     conn.commit()
 
 
+def ensure_indexes(conn: sqlite3.Connection, table: str) -> None:
+    conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_keyword ON {table}(keyword)")
+    conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_type ON {table}(type)")
+    conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_jion ON {table}(jion)")
+    conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_jikun ON {table}(jikun)")
+    conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_jikei ON {table}(jikei)")
+    conn.commit()
+
+
 def extract_entries(
     doc: html.HtmlElement, *, kanji_only: bool
 ) -> list[tuple[int, str, str, str]]:
@@ -445,6 +454,7 @@ def main() -> int:
     conn = sqlite3.connect(str(db_path))
     configure_sqlite(conn)
     ensure_schema(conn, table)
+    ensure_indexes(conn, table)
     conn.close()
 
     def run_vacuum() -> None:
