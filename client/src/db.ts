@@ -31,8 +31,9 @@ export async function loadDatabase(dbUrl: string): Promise<Database> {
 }
 
 export function getJikeiOptions(db: Database): string[] {
+  // WORKAROUND: truncate jikei to 2 chars for hypothesis testing; remove after crawler fix + re-fetch.
   const stmt = db.prepare(
-    "SELECT DISTINCT jikei FROM jitsu_entries WHERE jikei != '' ORDER BY jikei",
+    "SELECT DISTINCT substr(jikei, 1, 2) AS jikei FROM jitsu_entries WHERE jikei != '' ORDER BY jikei",
   )
   const options: string[] = []
   while (stmt.step()) {
@@ -73,12 +74,14 @@ function runQuery(
   let filterClause = ''
   if (jikeiFilters.length > 0) {
     const placeholders = jikeiFilters.map(() => '?').join(',')
-    filterClause = ` AND jikei IN (${placeholders})`
+    // WORKAROUND: truncate jikei to 2 chars for hypothesis testing; remove after crawler fix + re-fetch.
+    filterClause = ` AND substr(jikei, 1, 2) IN (${placeholders})`
     params.push(...jikeiFilters)
   }
 
+  // WORKAROUND: truncate jikei to 2 chars for hypothesis testing; remove after crawler fix + re-fetch.
   const sql = `
-    SELECT id, keyword, href, type, gaiji_img_src, jion, jikun, jikei
+    SELECT id, keyword, href, type, gaiji_img_src, jion, jikun, substr(jikei, 1, 2) AS jikei
     FROM jitsu_entries
     WHERE ${field} LIKE ? ESCAPE '\\'
     ${filterClause}

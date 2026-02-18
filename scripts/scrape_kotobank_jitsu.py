@@ -219,6 +219,8 @@ def parse_description(desc_elem: html.HtmlElement) -> dict[str, str]:
         if head.tail:
             parts.append(head.tail)
         for sibling in head.itersiblings():
+            if sibling.tag == "br":
+                break
             if sibling.tag == "span" and "head" in (sibling.get("class") or "").split():
                 break
             if sibling.text:
