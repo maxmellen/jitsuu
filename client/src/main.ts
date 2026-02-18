@@ -130,14 +130,15 @@ function runSearch(): void {
     return
   }
   const query = searchInput.value.trim()
-  if (!query) {
+  const filters = Array.from(selectedJikei.values())
+
+  if (!query && filters.length === 0) {
     resultsContainer.innerHTML = ''
     resultCount.textContent = ''
     statusText.textContent = 'Type to search'
     return
   }
 
-  const filters = Array.from(selectedJikei.values())
   const result = searchEntries(db, query, filters)
   const total = result.keyword.length + result.jion.length + result.jikun.length
 
@@ -148,7 +149,9 @@ function runSearch(): void {
     return
   }
 
-  statusText.textContent = `keyword ${result.keyword.length} / 音 ${result.jion.length} / 訓 ${result.jikun.length}`
+  statusText.textContent = query
+    ? `keyword ${result.keyword.length} / 音 ${result.jion.length} / 訓 ${result.jikun.length}`
+    : 'Filtered by 字形'
   resultCount.textContent = `${total} result${total === 1 ? '' : 's'}`
   renderResults(result)
 }

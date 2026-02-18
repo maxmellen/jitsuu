@@ -49,13 +49,18 @@ export function getJikeiOptions(db: Database): string[] {
 
 export function searchEntries(db: Database, query: string, jikeiFilters: string[]): SearchResults {
   const variants = buildQueryVariants(query)
-  if (variants.length === 0) {
+  if (variants.length === 0 && jikeiFilters.length === 0) {
     return { keyword: [], jion: [], jikun: [] }
   }
 
   const fields: Array<'keyword' | 'jion' | 'jikun'> = ['keyword', 'jion', 'jikun']
   const grouped: SearchResults = { keyword: [], jion: [], jikun: [] }
   const seen = new Set<number>()
+
+  if (variants.length === 0) {
+    grouped.keyword = runFilterOnly(db, jikeiFilters, 200)
+    return grouped
+  }
 
   for (const field of fields) {
     const fieldRows = runQuery(db, field, variants, jikeiFilters, 200)
@@ -69,6 +74,46 @@ export function searchEntries(db: Database, query: string, jikeiFilters: string[
   }
 
   return grouped
+}
+
+function runFilterOnly(db: Database, jikeiFilters: string[], limit: number): EntryRow[] {
+  if (jikeiFilters.length === 0) {
+    return []
+  }
+
+  const params: Array<string> = []
+  const placeholders = jikeiFilters.map(() => '?').join(',')
+  // WORKAROUND: truncate jikei to 2 chars for hypothesis testing; remove after crawler fix + re-fetch.
+  const filterClause = `WHERE substr(jikei, 1, 2) IN (${placeholders})`
+  params.push(...jikeiFilters)
+
+  // WORKAROUND: truncate jikei to 2 chars for hypothesis testing; remove after crawler fix + re-fetch.
+  const sql = `
+    SELECT id, keyword, href, type, gaiji_img_src, jion, jikun, substr(jikei, 1, 2) AS jikei
+    FROM jitsu_entries
+    ${filterClause}
+    ORDER BY type = 'word', keyword
+    LIMIT ${limit}
+  `
+
+  const stmt = db.prepare(sql)
+  stmt.bind(params)
+  const rows: EntryRow[] = []
+  while (stmt.step()) {
+    const row = stmt.getAsObject() as Record<string, string | number | null>
+    rows.push({
+      id: Number(row.id ?? 0),
+      keyword: String(row.keyword ?? ''),
+      href: String(row.href ?? ''),
+      type: String(row.type ?? ''),
+      gaiji_img_src: String(row.gaiji_img_src ?? ''),
+      jion: String(row.jion ?? ''),
+      jikun: String(row.jikun ?? ''),
+      jikei: String(row.jikei ?? ''),
+    })
+  }
+  stmt.free()
+  return rows
 }
 
 function runQuery(
