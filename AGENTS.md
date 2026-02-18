@@ -33,7 +33,12 @@ Output
 Tooling
 - Format: `uv run ruff format /Users/maxmellen/Developer/jithree`
 - Typecheck: `uv run ty check /Users/maxmellen/Developer/jithree`
+- Frontend format: `pnpm run format` (in `/Users/maxmellen/Developer/jithree/client`)
+- Frontend lint: `pnpm run lint` (in `/Users/maxmellen/Developer/jithree/client`, Biome)
+- Frontend typecheck: `pnpm run typecheck` (in `/Users/maxmellen/Developer/jithree/client`)
 
 Quality
 - After code changes, run `ruff format` and `ty check`.
+- After frontend changes, run `pnpm run format`, `pnpm run lint`, and `pnpm run typecheck` in `client/`.
+- Run frontend checks once after implementing frontend plans.
 - Update this document when architectural changes alter usage or structure.

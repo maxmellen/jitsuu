@@ -1,96 +1,281 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+  --bg: #f6f2ec;
+  --bg-accent: #efe5da;
+  --ink: #2a1f1a;
+  --muted: #6f625b;
+  --accent: #b04a2f;
+  --accent-soft: #e7c9b7;
+  --card: rgba(255, 255, 255, 0.86);
+  --border: #e2d3c7;
+  --shadow: 0 18px 40px rgba(45, 30, 21, 0.12);
+  --radius-lg: 18px;
+  --radius-md: 12px;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  font-family: "BIZ UDPGothic", system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 20% 20%, #fff8f1, var(--bg)),
+    linear-gradient(120deg, #f6efe9 0%, #f0e4da 45%, #f6f2ec 100%);
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 60%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.08) 0px,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px,
+      transparent 10px
+    );
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 #app {
-  max-width: 1280px;
+  position: relative;
+  z-index: 1;
+}
+
+.app {
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 28px clamp(18px, 3vw, 36px) 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #3178c6aa);
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.card {
-  padding: 2em;
+.hero-title {
+  font-family: "BIZ UDPMincho", serif;
+  font-size: clamp(28px, 4vw, 40px);
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
-.read-the-docs {
-  color: #888;
+.hero-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+.controls {
+  display: grid;
+  gap: 18px;
+}
+
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 16px;
+  box-shadow: var(--shadow);
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(176, 74, 47, 0.18);
+}
+
+.filters {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.filters-title {
+  font-family: "BIZ UDPMincho", serif;
+  letter-spacing: 0.08em;
+  font-size: 16px;
+}
+
+.filters-clear {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 12px;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.filter-chip input {
+  accent-color: var(--accent);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.results {
+  display: grid;
+  gap: 16px;
+}
+
+.result-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.kanji-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 72px;
+}
+
+.kanji-glyph {
+  font-family: "BIZ UDPMincho", serif;
+  font-size: 32px;
+  line-height: 1;
+  height: 32px;
+  width: 32px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+}
+
+.kanji-glyph img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.kanji-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: #4a2c1f;
+  font-family: "BIZ UDPMincho", serif;
+  letter-spacing: 0.08em;
+}
+
+.readings {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.reading-row {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.reading-label {
+  font-family: "BIZ UDPMincho", serif;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.reading-value {
+  font-size: 15px;
+}
+
+.empty-state {
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border);
+  text-align: center;
+  color: var(--muted);
+}
+
+@media (min-width: 900px) {
+  .controls {
+    grid-template-columns: 1.2fr 1fr;
+    align-items: start;
   }
-  a:hover {
-    color: #747bff;
+}
+
+@media (max-width: 700px) {
+  .result-card {
+    grid-template-columns: 1fr;
+    text-align: left;
   }
-  button {
-    background-color: #f9f9f9;
+
+  .kanji-block {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .kanji-badge {
+    order: 2;
   }
 }
