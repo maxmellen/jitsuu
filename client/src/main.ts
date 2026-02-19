@@ -25,42 +25,65 @@ root.innerHTML = `
     </header>
     <section class="layout">
       <div class="sidebar">
-        <div class="search-field">
-          <span class="search-label">検索</span>
-          <input
-            class="search-input"
-            id="search-input"
-            type="search"
-            placeholder="例: 亜 / ア / あげまき"
-            autocomplete="off"
-          />
-        </div>
-        <div class="filters-panel">
-          <div class="filters-header">
-            <div class="filters-title">字形</div>
-            <div class="filters-actions">
-              <button
-                type="button"
-                class="filters-toggle"
-                id="toggle-filters"
-                aria-expanded="false"
-                aria-controls="filters-body"
-              >
-                展開
-              </button>
-              <button type="button" class="filters-clear" id="clear-filters">解除</button>
+        <div class="sidebar-main">
+          <div class="search-field">
+            <span class="search-label">検索</span>
+            <input
+              class="search-input"
+              id="search-input"
+              type="search"
+              placeholder="例: 亜 / ア / あげまき"
+              autocomplete="off"
+            />
+          </div>
+          <div class="filters-panel">
+            <div class="filters-header">
+              <div class="filters-title">字形</div>
+              <div class="filters-actions">
+                <button
+                  type="button"
+                  class="filters-toggle"
+                  id="toggle-filters"
+                  aria-expanded="false"
+                  aria-controls="filters-body"
+                >
+                  展開
+                </button>
+                <button type="button" class="filters-clear" id="clear-filters">解除</button>
+              </div>
+            </div>
+            <div class="filters-body" id="filters-body">
+              <div class="filter-list" id="jikei-filters"></div>
             </div>
           </div>
-          <div class="filters-body" id="filters-body">
-            <div class="filter-list" id="jikei-filters"></div>
-          </div>
         </div>
+        <footer class="legal" id="legal">
+          <p>
+            <a
+              href="https://www.heibonsha.co.jp/book/b165244.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              普及版 字通 © Shizuka Shirakawa / Heibonsha Limited.
+            </a><br>
+            <a href="https://kotobank.jp/dictionary/jitsu/" target="_blank" rel="noopener noreferrer">
+              コトバンク © DIGITALIO, Inc.
+            </a>
+          </p>
+          <p>
+            本アプリは索引のみを提供します。本文は掲載していません。<br>
+            クッキーや個人情報は利用・保存しません。
+          </p>
+        </footer>
       </div>
       <div class="content">
         <section class="status">
           <span id="status-text">データベース読込中…</span>
+          <div class="status-nav" id="status-nav"></div>
         </section>
-        <section class="results" id="results"></section>
+        <div class="content-scroll" id="content-scroll">
+          <section class="results" id="results"></section>
+        </div>
       </div>
     </section>
     <button type="button" class="scroll-top" id="scroll-top" aria-label="上へ">
@@ -71,12 +94,15 @@ root.innerHTML = `
 
 const searchInput = mustGet<HTMLInputElement>('#search-input')
 const statusText = mustGet<HTMLSpanElement>('#status-text')
+const statusNav = mustGet<HTMLDivElement>('#status-nav')
 const resultsContainer = mustGet<HTMLDivElement>('#results')
 const filtersContainer = mustGet<HTMLDivElement>('#jikei-filters')
 const clearFiltersButton = mustGet<HTMLButtonElement>('#clear-filters')
 const toggleFiltersButton = mustGet<HTMLButtonElement>('#toggle-filters')
 const filtersBody = mustGet<HTMLDivElement>('#filters-body')
+const contentScroll = mustGet<HTMLDivElement>('#content-scroll')
 const scrollTopButton = mustGet<HTMLButtonElement>('#scroll-top')
+const legal = mustGet<HTMLElement>('#legal')
 
 searchInput.disabled = true
 
@@ -86,6 +112,20 @@ const selectedJikei = new Set<string>()
 let searchTimeout: number | undefined
 let filtersOpen = false
 let applyingUrlState = false
+let scrollContainer: Window | HTMLElement = window
+
+function isWindow(container: Window | HTMLElement): container is Window {
+  return container === window
+}
+
+function getScrollOffset(container: Window | HTMLElement): number {
+  return isWindow(container) ? container.scrollY : container.scrollTop
+}
+
+const handleScroll = (): void => {
+  const offset = getScrollOffset(scrollContainer)
+  scrollTopButton.classList.toggle('is-visible', offset >= 300)
+}
 
 void init()
 
@@ -95,11 +135,16 @@ async function init(): Promise<void> {
     jikeiOptions = getJikeiOptions(db)
     applyUrlState()
     renderFilters()
-    setFiltersOpen(window.matchMedia('(min-width: 900px)').matches)
+    setFiltersOpen(selectedJikei.size > 0 || window.matchMedia('(min-width: 900px)').matches)
     searchInput.disabled = false
     searchInput.focus()
     statusText.textContent = '準備完了'
     runSearch()
+    requestAnimationFrame(() => updateLegalHeight())
+    if ('fonts' in document) {
+      void document.fonts.ready.then(() => updateLegalHeight())
+    }
+    updateScrollContainer()
 
     searchInput.addEventListener('input', () => scheduleSearch())
     clearFiltersButton.addEventListener('click', () => {
@@ -109,15 +154,21 @@ async function init(): Promise<void> {
     })
     toggleFiltersButton.addEventListener('click', () => setFiltersOpen(!filtersOpen))
     scrollTopButton.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    })
-    window.addEventListener('scroll', () => {
-      scrollTopButton.classList.toggle('is-visible', window.scrollY >= 300)
+      if (scrollContainer === window) {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     })
     scrollTopButton.classList.remove('is-visible')
+    window.addEventListener('resize', () => {
+      updateLegalHeight()
+      updateScrollContainer()
+    })
     window.addEventListener('popstate', () => {
       applyUrlState()
       renderFilters()
+      setFiltersOpen(selectedJikei.size > 0 || window.matchMedia('(min-width: 900px)').matches)
       runSearch()
     })
   } catch (error) {
@@ -131,6 +182,32 @@ function setFiltersOpen(open: boolean): void {
   filtersBody.hidden = !open
   toggleFiltersButton.setAttribute('aria-expanded', String(open))
   toggleFiltersButton.textContent = open ? '折畳' : '展開'
+}
+
+function updateLegalHeight(): void {
+  const mobileQuery = window.matchMedia('(max-width: 899px)')
+  const height = mobileQuery.matches ? Math.ceil(legal.getBoundingClientRect().height) : 0
+  document.documentElement.style.setProperty('--legal-height', `${height}px`)
+}
+
+function updateScrollContainer(): void {
+  const next = window.matchMedia('(min-width: 900px)').matches ? contentScroll : window
+  if (next === scrollContainer) {
+    handleScroll()
+    return
+  }
+  if (scrollContainer === window) {
+    window.removeEventListener('scroll', handleScroll)
+  } else {
+    scrollContainer.removeEventListener('scroll', handleScroll)
+  }
+  scrollContainer = next
+  if (scrollContainer === window) {
+    window.addEventListener('scroll', handleScroll)
+  } else {
+    scrollContainer.addEventListener('scroll', handleScroll)
+  }
+  handleScroll()
 }
 
 function readUrlState(): { query: string; filters: string[] } {
@@ -202,6 +279,7 @@ function runSearch(): void {
   if (!query && filters.length === 0) {
     resultsContainer.innerHTML = ''
     statusText.textContent = '検索語を入力'
+    statusNav.innerHTML = ''
     writeUrlState('', [])
     return
   }
@@ -211,15 +289,20 @@ function runSearch(): void {
   if (!activeDb) {
     return
   }
-  const result =
-    tokens.length === 1
-      ? searchEntries(activeDb, tokens[0], filters)
-      : mergeResults(tokens.map((token) => searchEntries(activeDb, token, filters)))
+  let result: SearchResults
+  if (tokens.length === 0) {
+    result = searchEntries(activeDb, '', filters)
+  } else if (tokens.length === 1) {
+    result = searchEntries(activeDb, tokens[0], filters)
+  } else {
+    result = mergeResults(tokens.map((token) => searchEntries(activeDb, token, filters)))
+  }
   const total = result.keyword.length + result.jion.length + result.jikun.length
 
   if (total === 0) {
     resultsContainer.innerHTML = '<div class="empty-state">一致する結果がありません</div>'
     statusText.textContent = '一致なし'
+    statusNav.innerHTML = ''
     writeUrlState(query, filters)
     return
   }
@@ -307,6 +390,7 @@ function renderFilters(): void {
 
 function renderResults(results: SearchResults): void {
   resultsContainer.innerHTML = ''
+  statusNav.innerHTML = ''
   const fragment = document.createDocumentFragment()
 
   const groups: Array<{ key: keyof SearchResults; label: string }> = [
@@ -416,7 +500,7 @@ function renderResults(results: SearchResults): void {
       updateToggleAllLabel()
       nav.appendChild(toggleAll)
     }
-    fragment.prepend(nav)
+    statusNav.appendChild(nav)
   }
 
   resultsContainer.appendChild(fragment)
